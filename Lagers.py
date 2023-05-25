@@ -1,3 +1,5 @@
+#Utilizing Google Colab.
+
 !pip install xgboost
 
 import pandas as pd
@@ -7,24 +9,23 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
 
 #Connect to Google Drive
 from google.colab import drive
 drive.mount('/content/drive')
 
 #Load the data sets (pre)
-train_df = pd.read_csv('.../Training Sets/Lager Training Data - Training Data.csv')
-test_df = pd.read_csv('.../Testing Sets/Lager Testing Data - Testing Data Recipe Generator.csv')
+train_df = pd.read_csv('.../Training Data.csv')
+test_df = pd.read_csv('.../Testing Data.csv')
 
-#Transform data
+#Transform data so that letters and symbols are eliminated from the set
 le = LabelEncoder()
-train_df['Beer Name'] = le.fit_transform(train_df['Beer Name'])
+train_df['Observation_Names'] = le.fit_transform(train_df['Observation_Names'])
 
 #assign x and y
-y_train = train_df['Untappd Score']
-train_df.pop('Untappd Score')
-test_df.pop('Untappd Score')
+y_train = train_df['Tgt_Column']
+train_df.pop('Tgt_Column')
+test_df.pop('Tgt_Column')
 scaler = StandardScaler()
 scaled_train_df = scaler.fit_transform(train_df)
 scaled_test_df = scaler.transform(test_df)
@@ -32,7 +33,7 @@ scaled_test_df = scaler.transform(test_df)
 # Create and configure the XGBoost regressor
 xgb_regressor = xgb.XGBRegressor(objective='reg:squarederror', seed=42)
 
-# Define the parameter grid for tuning
+# Define the parameter grid for tuning. Get as ridiculous and add as many parameters as you want. 
 param_grid = {
     'max_depth': [3, 4, 5],
     'min_child_weight': [1, 3, 5],
@@ -57,8 +58,8 @@ best_xgb_regressor.fit(train_df, y_train)
 # Make predictions on the test set
 y_pred = best_xgb_regressor.predict(test_df)
 
-#Implant New Untappd Reviews to test data frame
-test_df['Untappd Score'] = y_pred
+#Implant new target column with the originial test data frame, which creates a final result dataframe
+test_df['Tgt_Column'] = y_pred
 
 #Export Final CSV into Colab Testing Folder - Change to name you want
-test_df.to_csv('.../Lager XGBoost Results scaled 3 4_6_23.csv',index=False)
+test_df.to_csv('.../XGBoost Results.csv',index=False)
